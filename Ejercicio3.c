@@ -1,83 +1,72 @@
-Funcion getRandomCharacter() : caracter
-    Definir min, max, codigo como entero
-    min ← CodigoCaracter('A')
-    max ← CodigoCaracter('Z')
-    codigo ← getRandomNumber(min, max)
-    Retornar CaracterDeCodigo(codigo)
-FinFuncion
-Procedimiento fillWithRandomCharacters(n: entero, m: entero, REF sopa: tSoup)
-    Definir i, j como entero
-    Definir c como caracter
+//Obtenir lletra aleatoria:
 
-    Para i ← 1 Hasta n Hacer
-        Para j ← 1 Hasta m Hacer
-            c ← getRandomCharacter()
-            setCharacter(sopa, i, j, c)
-        FinPara
-    FinPara
-FinProcedimiento
-Procedimiento writeSoup(n: entero, m: entero, sopa: tSoup)
-    Definir i, j como entero
+ funcio getRandomCharacter(): caracter
+var
+  min, max, code: enter;
+fvar
+  min := 65;       // A
+  max := 90;       // Z
+  code := getRandomNumber(min, max);
+  retorna chr(code);
+ffuncio
 
-    Para i ← 1 Hasta n Hacer
-        Para j ← 1 Hasta m Hacer
-            EscribirSinSalto getCharacter(sopa, i, j) & " "
-        FinPara
-        Escribir ""  // Salto de línea
-    FinPara
-FinProcedimiento
-Procedimiento initSearch(REF search: tSearch)
-    search.count ← 0
-FinProcedimiento
-Procedimiento addWordToSearch(REF search: tSearch, palabra: tWord)
-    Si search.count < 15 Entonces
-        search.words[search.count] ← palabra
-        search.count ← search.count + 1
-    FinSi
-FinProcedimiento
-Procedimiento initSoup(n: entero, m: entero, REF sopa: tSoup)
-    sopa.rows ← n
-    sopa.columns ← m
-    sopa.state ← EMPTY
-FinProcedimiento
-Procedimiento hideWordIntoSoup(REF palabra: tWord, n: entero, m: entero, REF sopa: tSoup)
-    Definir i, j, ori, len, k como entero
+//Omplir la sopa lletres aleatòries:
 
-    len ← longitud de palabra.letters
-    ori ← getRandomNumber(1, 3)  // 1 = VERTICAL, 2 = HORIZONTAL, 3 = DIAGONAL
+accio fillWithRandomCharacters(ent n: enter, ent m: enter, entsor soup: tSoup)
+var
+  c: caracter;
+  i, j: enter;
+fvar
+  per i := 1 fins n fer
+    per j := 1 fins m fer
+      c := getRandomCharacter();
+      soup[i][j] := c; 
+    fper
+  fper
+faccio
 
-    Si ori = 1 Entonces  // VERTICAL
-        i ← getRandomNumber(1, n - len + 1)
-        j ← getRandomNumber(1, m)
-        palabra.position.horizontal ← j
-        palabra.position.vertical ← i
-        palabra.position.orientation ← VERTICAL
+//Escriure la sopa:
 
-        Para k ← 0 Hasta len - 1 Hacer
-            setCharacter(sopa, i + k, j, palabra.letters[k])
-        FinPara
+accio writeSoup(ent n, m: enter, ent soup: tSoup)
+var
+  i, j: enter;
+fvar
+  writeInteger(n);
+  writeInteger(m);
+  per i := 1 fins n fer
+    per j := 1 fins m fer
+      writeChar(soup[i][j]);
+    fper
+  fper
+faccio
 
-    Sino Si ori = 2 Entonces  // HORIZONTAL
-        i ← getRandomNumber(1, n)
-        j ← getRandomNumber(1, m - len + 1)
-        palabra.position.horizontal ← j
-        palabra.position.vertical ← i
-        palabra.position.orientation ← HORIZONTAL
 
-        Para k ← 0 Hasta len - 1 Hacer
-            setCharacter(sopa, i, j + k, palabra.letters[k])
-        FinPara
+//Inserir paraula:
 
-    Sino  // DIAGONAL
-        i ← getRandomNumber(1, n - len + 1)
-        j ← getRandomNumber(1, m - len + 1)
-        palabra.position.horizontal ← j
-        palabra.position.vertical ← i
-        palabra.position.orientation ← DIAGONAL
-
-        Para k ← 0 Hasta len - 1 Hacer
-            setCharacter(sopa, i + k, j + k, palabra.letters[k])
-        FinPara
-    FinSi
-FinProcedimiento
-
+accio hideWordIntoSoup(entsor word: tWord, ent n: enter, ent m: enter, entsor soup: tSoup)
+var
+  i, j, k, ori, len: enter;
+fvar
+  len := getWordLength(word);
+  ori := getRandomNumber(1, 3);
+  
+  si ori = 1 llavors {VERTICAL}
+    i := getRandomNumber(1, n - len + 1);
+    j := getRandomNumber(1, m);
+    per k := 1 fins len fer
+      soup[i + k - 1][j] := word[k];
+    fper
+  sino si ori = 2 llavors {HORIZONTAL}
+    i := getRandomNumber(1, n);
+    j := getRandomNumber(1, m - len + 1);
+    per k := 1 fins len fer
+      soup[i][j + k - 1] := word[k];
+    fper
+  sino {DIAGONAL}
+    i := getRandomNumber(1, n - len + 1);
+    j := getRandomNumber(1, m - len + 1);
+    per k := 1 fins len fer
+      soup[i + k - 1][j + k - 1] := word[k];
+    fper
+  fsi
+faccio
