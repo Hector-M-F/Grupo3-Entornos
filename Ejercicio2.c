@@ -1,14 +1,41 @@
-// Obtiene un caracter de la posicion (fila, columna) de la sopa
-char getCharacter(tSoup soup, int row, int col);
+Funcion getCharacter(sopa: tSoup, fila: entero, columna: entero) : caracter
+    Retornar sopa.grid[fila][columna]
+FinFuncion
+Procedimiento setCharacter(REF sopa: tSoup, fila: entero, columna: entero, c: caracter)
+    sopa.grid[fila][columna] ← c
+FinProcedimiento
+Procedimiento setWord(REF sopa: tSoup, REF palabra: tWord, posicion: tPosition)
+    Definir i, longitud como entero
+    longitud ← longitud de palabra.letters
 
-// Establece un caracter en la posicion (fila, columna) de la sopa
-void setCharacter(tSoup *soup, int row, int col, char c);
+    palabra.position ← posicion
 
-// Coloca una palabra en la sopa en una posicion y orientacion dada
-void setWord(tSoup *soup, tWord *word, tPosition position);
+    Si posicion.orientation = HORIZONTAL Entonces
+        Para i ← 0 Hasta longitud - 1 Hacer
+            sopa.grid[posicion.vertical][posicion.horizontal + i] ← palabra.letters[i]
+        FinPara
 
-// Inicializa la sopa con dimensiones dadas
-void initSoup(tSoup *soup, int rows, int cols);
+    Sino Si posicion.orientation = VERTICAL Entonces
+        Para i ← 0 Hasta longitud - 1 Hacer
+            sopa.grid[posicion.vertical + i][posicion.horizontal] ← palabra.letters[i]
+        FinPara
 
-// Lee una palabra de la entrada
-tWord readWord();
+    Sino Si posicion.orientation = DIAGONAL Entonces
+        Para i ← 0 Hasta longitud - 1 Hacer
+            sopa.grid[posicion.vertical + i][posicion.horizontal + i] ← palabra.letters[i]
+        FinPara
+    FinSi
+FinProcedimiento
+Procedimiento initSoup(REF sopa: tSoup, filas: entero, columnas: entero)
+    sopa.rows ← filas
+    sopa.columns ← columnas
+    sopa.state ← EMPTY
+FinProcedimiento
+Funcion readWord() : tWord
+    Definir w como tWord
+    Escribir "Introduce una palabra (max 15 letras):"
+    Leer w.letters
+    w.found ← 0
+    // La posición se inicializará más adelante
+    Retornar w
+FinFuncion
