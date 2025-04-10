@@ -1,44 +1,27 @@
-typedef enum {
-    HORIZONTAL,
-    VERTICAL,
-    DIAGONAL
-} tOrientation;
+Tipo tOrientation = (HORIZONTAL, VERTICAL, DIAGONAL)
 
-typedef struct {
-    int horizontal;
-    int vertical;
-    tOrientation orientation;
-} tPosition;
-
-typedef struct {
-    char letters[16]; // M·ximo 15 caracteres
-    int found; // 0 = no encontrada 1 = encontrada
-    tPosition position;
-} tWord;
-
-// Estado de la sopa de letras
-typedef enum {
-    EMPTY,           // VacÌa
-    RANDOM_FILLED,   // Rellena con caracteres aleatorios
-    READY_TO_PLAY    // Lista para jugar
-} tSoupState;
-
-// Tipo para la sopa de letras
-typedef struct {
-    char grid[50][50]; // TamaÒo m·ximo
-    int rows;
-    int columns;
-    tSoupState state;
-} tSoup;
-
-// Tipo para las palabras a buscar
-typedef struct {
-    tWord words[15]; // M·ximo 15 palabras
-    int count;
-} tSearch;
-
-// Tipo para el juego completo
-typedef struct {
-    tSoup soup;
-    tSearch search;
-} tGame;
+Tipo tSoupState = (EMPTY, RANDOM_FILLED, READY_TO_PLAY)
+Registro tPosition
+    entero horizontal
+    entero vertical
+    tOrientation orientation
+FinRegistro
+Registro tWord
+    cadena letters[16]     // Cadena de m√°ximo 15 caracteres + '\0'
+    entero found           // 0 = no encontrada, 1 = encontrada
+    tPosition position     // Posici√≥n donde se encuentra la palabra
+FinRegistro
+Registro tSoup
+    caracter grid[50][50]  // Matriz de caracteres de 50x50
+    entero rows            // N√∫mero de filas
+    entero columns         // N√∫mero de columnas
+    tSoupState state       // Estado de la sopa
+FinRegistro
+Registro tSearch
+    tWord words[15]        // Lista de hasta 15 palabras
+    entero count           // N√∫mero de palabras a√±adidas
+FinRegistro
+Registro tGame
+    tSoup soup             // La sopa de letras completa
+    tSearch search         // Palabras que hay que buscar
+FinRegistro
