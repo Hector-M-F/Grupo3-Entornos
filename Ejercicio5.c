@@ -3,161 +3,218 @@
 #include <string.h>
 #include <time.h>
 
-#define MAX_PALABRAS 100
-#define MAX_LONGITUD 20
-#define TAMANO_SOPA 10
+typedef enum {
+    HORIZONTAL,
+    VERTICAL,
+    DIAGONAL
+} tOrientation;
 
-char sopa[TAMANO_SOPA][TAMANO_SOPA];
-char palabras[MAX_PALABRAS][MAX_LONGITUD];
-int numPalabras = 0;
+typedef struct {
+    int horizontal;
+    int vertical;
+    tOrientation orientation;
+} tPosition;
 
-void menu();
-void crearSopa();
-void imprimirSopa();
-void agregarPalabra();
-void insertarPalabraEnSopa(char *palabra);
-int puedeInsertarse(int fila, int col, char *palabra, int dx, int dy);
-void insertar(int fila, int col, char *palabra, int dx, int dy);
+typedef struct {
+    char letters[16]; // Max 15 letras + '\0'
+    int found;
+    tPosition position;
+} tWord;
 
-int main() {
-    srand((unsigned int)time(NULL));
-    menu();
-    return 0;
+typedef enum {
+    EMPTY,
+    RANDOM_FILLED,
+    READY_TO_PLAY
+} tSoupState;
+
+typedef struct {
+    char grid[50][50];
+    int rows;
+    int columns;
+    tSoupState state;
+} tSoup;
+
+typedef struct {
+    tWord words[15];
+    int count;
+} tSearch;
+
+typedef struct {
+    tSoup soup;
+    tSearch search;
+} tGame;
+
+int getRandomNumber(int min, int max) {
+    return min + rand() % (max - min + 1);
 }
 
-void menu() {
-    int opcion;
-    do {
-        printf("\n--- MENU ---\n");
-        printf("1. Agregar palabra\n");
-        printf("2. Crear sopa de letras\n");
-        printf("3. Imprimir sopa\n");
-        printf("4. Salir\n");
-        printf("Selecciona una opcion: ");
-        scanf("%d", &opcion);
-        getchar();  // Limpiar el buffer del teclado
-
-        switch (opcion) {
-            case 1:
-                agregarPalabra();
-                break;
-            case 2:
-                crearSopa();
-                break;
-            case 3:
-                imprimirSopa();
-                break;
-            case 4:
-                printf("Saliendo...\n");
-                break;
-            default:
-                printf("Opcion invalida\n");
-        }
-    } while (opcion != 4);
+char getRandomCharacter() {
+    int min = 'A';
+    int max = 'Z';
+    int code = getRandomNumber(min, max);
+    return (char)code;
 }
 
-void agregarPalabra() {
-    if (numPalabras >= MAX_PALABRAS) {
-        printf("No se pueden agregar mas palabras.\n");
-        return;
-    }
+char getCharacter(tSoup soup, int row, int col) {
+    return soup.grid[row - 1][col - 1];
+}
 
-    char palabra[MAX_LONGITUD];
+void setCharacter(tSoup *soup, int row, int col, char c) {
+    soup->grid[row - 1][col - 1] = c;
+}
+
+int getWordLength(tWord word) {
+    return strlen(word.letters);
+}
+
+void reverseWord(tWord *word) {
     int i;
+    int len = getWordLength(*word);
+    char temp;
 
-    printf("Introduce la palabra a agregar (sin espacios): ");
-    scanf("%s", palabra);
-
-    if (strlen(palabra) >= MAX_LONGITUD) {
-        printf("La palabra es demasiado larga (maximo %d caracteres).\n", MAX_LONGITUD - 1);
-        return;
+    for (i = 0; i < len / 2; i++) {
+        temp = word->letters[i];
+        word->letters[i] = word->letters[len - i - 1];
+        word->letters[len - i - 1] = temp;
     }
-
-    for (i = 0; i < numPalabras; i++) {
-        if (strcmp(palabras[i], palabra) == 0) {
-            printf("La palabra ya existe en la lista.\n");
-            return;
-        }
-    }
-
-    strcpy(palabras[numPalabras], palabra);
-    numPalabras++;
-    printf("Palabra agregada correctamente.\n");
 }
 
-void crearSopa() {
-    int i, j;
-
-    for (i = 0; i < TAMANO_SOPA; i++) {
-        for (j = 0; j < TAMANO_SOPA; j++) {
-            sopa[i][j] = 'A' + rand() % 26;
-        }
-    }
-
-    for (i = 0; i < numPalabras; i++) {
-        insertarPalabraEnSopa(palabras[i]);
-    }
-
-    printf("Sopa de letras generada.\n");
+void initSoup(tSoup *soup, int rows, int cols) {
+    soup->rows = rows;
+    soup->columns = cols;
+    soup->state = EMPTY;
 }
 
-void imprimirSopa() {
+void initSearch(tSearch *search) {
+    search->count = 0;
+}
+
+void addWordToSearch(tSearch *search, tWord word) {
+    if (search->count < 15) {
+        search->words[search->count] = word;
+        search->count++;
+    }
+}
+
+void fillWithRandomCharacters(int n, int m, tSoup *soup) {
+    int i, j;
+    char c;
+
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= m; j++) {
+            c = getRandomCharacter();
+            setCharacter(soup, i, j, c);
+        }
+    }
+}
+
+void writeSoup(int n, int m, tSoup soup) {
     int i, j;
 
-    printf("\nSOPA DE LETRAS:\n");
-    for (i = 0; i < TAMANO_SOPA; i++) {
-        for (j = 0; j < TAMANO_SOPA; j++) {
-            printf("%c ", sopa[i][j]);
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= m; j++) {
+            printf("%c ", getCharacter(soup, i, j));
         }
         printf("\n");
     }
-
-    printf("\nPalabras:\n");
-    for (i = 0; i < numPalabras; i++) {
-        printf("%s\n", palabras[i]);
-    }
 }
 
-void insertarPalabraEnSopa(char *palabra) {
-    int len = strlen(palabra);
-    int intentos = 100;
-    int fila, col, dx, dy;
+void setWord(tSoup *soup, tWord *word, tPosition position) {
+    int k;
+    int len = getWordLength(*word);
 
-    while (intentos--) {
-        fila = rand() % TAMANO_SOPA;
-        col = rand() % TAMANO_SOPA;
-        dx = rand() % 3 - 1;
-        dy = rand() % 3 - 1;
+    for (k = 0; k < len; k++) {
+        int row = position.vertical;
+        int col = position.horizontal;
 
-        if (dx == 0 && dy == 0) continue;
-
-        if (puedeInsertarse(fila, col, palabra, dx, dy)) {
-            insertar(fila, col, palabra, dx, dy);
-            return;
+        if (position.orientation == HORIZONTAL) {
+            setCharacter(soup, row, col + k, word->letters[k]);
+        } else if (position.orientation == VERTICAL) {
+            setCharacter(soup, row + k, col, word->letters[k]);
+        } else if (position.orientation == DIAGONAL) {
+            setCharacter(soup, row + k, col + k, word->letters[k]);
         }
     }
-    printf("No se pudo insertar la palabra: %s\n", palabra);
+
+    word->position = position;
 }
 
-int puedeInsertarse(int fila, int col, char *palabra, int dx, int dy) {
-    int i, x, y;
-    int len = strlen(palabra);
+void hideWordIntoSoup(tWord *word, int n, int m, tSoup *soup) {
+    int i, j, ori, len, reverse;
+    tWord tempWord;
+    int k;
 
-    for (i = 0; i < len; i++) {
-        x = fila + i * dx;
-        y = col + i * dy;
-        if (x < 0 || x >= TAMANO_SOPA || y < 0 || y >= TAMANO_SOPA) return 0;
+    len = getWordLength(*word);
+    ori = getRandomNumber(0, 2); // 0 = H, 1 = V, 2 = D
+    reverse = getRandomNumber(0, 1); // 0 = normal, 1 = invertida
+    tempWord = *word;
+
+    if (reverse == 1) {
+        reverseWord(&tempWord);
     }
-    return 1;
+
+    if (ori == VERTICAL) {
+        i = getRandomNumber(1, n - len + 1);
+        j = getRandomNumber(1, m);
+        tempWord.position.orientation = VERTICAL;
+    } else if (ori == HORIZONTAL) {
+        i = getRandomNumber(1, n);
+        j = getRandomNumber(1, m - len + 1);
+        tempWord.position.orientation = HORIZONTAL;
+    } else {
+        i = getRandomNumber(1, n - len + 1);
+        j = getRandomNumber(1, m - len + 1);
+        tempWord.position.orientation = DIAGONAL;
+    }
+
+    tempWord.position.vertical = i;
+    tempWord.position.horizontal = j;
+
+    setWord(soup, &tempWord, tempWord.position);
+
+    *word = tempWord; // Guardamos la posición y orientación
 }
 
-void insertar(int fila, int col, char *palabra, int dx, int dy) {
-    int i, x, y;
-    int len = strlen(palabra);
+tWord readWord() {
+    tWord word;
+    printf("Introduce una palabra (max 15 letras): ");
+    scanf("%15s", word.letters);
+    word.found = 0;
+    return word;
+}
 
-    for (i = 0; i < len; i++) {
-        x = fila + i * dx;
-        y = col + i * dy;
-        sopa[x][y] = palabra[i];
+int main() {
+    tGame game;
+    int numWords;
+    int i;
+    int rows, cols;
+
+    srand(time(NULL));
+
+    printf("Introduce el numero de filas de la sopa: ");
+    scanf("%d", &rows);
+    printf("Introduce el numero de columnas de la sopa: ");
+    scanf("%d", &cols);
+
+    initSoup(&game.soup, rows, cols);
+    initSearch(&game.search);
+
+    printf("Cuantas palabras quieres introducir (max 15): ");
+    scanf("%d", &numWords);
+
+    for (i = 0; i < numWords && i < 15; i++) {
+        tWord w = readWord();
+        addWordToSearch(&game.search, w);
     }
+
+    fillWithRandomCharacters(rows, cols, &game.soup);
+
+    for (i = 0; i < game.search.count; i++) {
+        hideWordIntoSoup(&game.search.words[i], rows, cols, &game.soup);
+    }
+
+    printf("\n--- Sopa de letras generada ---\n");
+    writeSoup(rows, cols, game.soup);
+
+    return 0;
 }
